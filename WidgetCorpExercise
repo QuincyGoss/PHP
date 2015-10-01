@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+	"http://www.w3.org/TR/html4/loose.dtd">
+	
+<html lang="en">
+	<head>
+	<title>Widget Corp</title>
+	<link href="stylesheets/public.css" media="all" 
+	rel="stylesheet" type="text/css" />
+	</head>
+	<body>
+	<div id="header">
+	<h1>Widget Corp</h1>
+	</div>
+	
+	//functions.php
+	
+	<?php
+
+function confirm_query($result_set) {
+	if (!$result_set) {
+		die("Database query failed.");
+	}
+}
+
+function find_all_subjects() {
+global $connection;
+
+$query = "SELECT * ";
+$query .= "FROM subjects ";
+//$query .= "WHERE visible = 1 ";
+$query .= "ORDER BY position ASC";
+$result = mysqli_query($connection, $query);
+confirm_query($result);
+return $result;
+}
+
+function find_pages_for_subject($subject_id) {
+global $connection;
+
+$safe_subject_id = mysqli_real_escape_string($connection, $subject_id);
+
+$query = "SELECT * ";
+$query .= "FROM pages ";
+$query .= "WHERE visible = 1 ";
+$query .= "AND subject_id = {$safe_subject_id} ";
+$query .= "ORDER BY position ASC";
+//$result isn't finished yet. rename to $page_set
+$page_set = mysqli_query($connection, $query);
+confirm_query($page_set);
+return $page_set;
+}
+
+function navigation ($subject_array, $page_array) {
+	//navigation takes 2 arguments
+	// - the current subject array or null
+	// - the current page array or null
+	$output = "<ul class=\"subjects\">";
+	 $result = find_all_subjects() ; 
+	 while($subject = mysqli_fetch_assoc($result)) {
+	//every time there was an echo statement, instead $output .=
+	$output .= "<li";
+	if ($subject_array && $subject["id"] == $subject_array["id"]) {
+	$output .= " class=\"selected\""; }
+	$output .= ">"; 
+	$output .= "<a href=\"manage_content.php?subject=";
+	$output .= urlencode($subject["id"]); 
+	$output .= "\">";
+	$output .= $subject["menu_name"]; 
+	$output .= "</a>";
+	
+	$page_set = find_pages_for_subject($subject["id"]);
+	$output .= "<ul class=\"pages\">";
+	while($page = mysqli_fetch_assoc($page_set)) {
+	$output .= "<li";
+		if ($page_array && $page["id"] == $page_array["id"]) {
+		$output .= " class=\"selected\"";
+		}
+		$output .= ">"; 
+	$output .= "<a href=\"manage_content.php?page=";
+	$output .= urlencode($page["id"]); 
+	$output .= "\">";
+	$output .= $page["menu_name"]; 
+	$output .= "</a></li>";
+	}
+	mysqli_free_result($page_set);
+	$output .= "</ul></li>";
+	}
+	mysqli_free_result($result);
+	$output .= "</ul>";
+	return $output;
+}
+
+function find_subject_by_id($subject_id) {
+global $connection;
+
+$safe_subject_id = mysqli_real_escape_string($connection, $subject_id);
+
+$query = "SELECT * ";
+$query .= "FROM subjects ";
+$query .= "WHERE id = {$safe_subject_id} ";
+$query .= "LIMIT 1";
+$result = mysqli_query($connection, $query);
+confirm_query($result);
+if($subject = mysqli_fetch_assoc($result)) {
+return $subject;
+} else {
+	return null;
+}
+}
+
+function find_page_by_id($page_id) {
+	global $connection;
+
+$safe_page_id = mysqli_real_escape_string($connection, $page_id);
+
+$query = "SELECT * ";
+$query .= "FROM pages ";
+$query .= "WHERE id = {$safe_page_id} ";
+$query .= "LIMIT 1";
+$result = mysqli_query($connection, $query);
+confirm_query($page_set);
+if($page = mysqli_fetch_assoc($page_set)) {
+return $page;
+} else {
+	return null;
+}
+}
+
+function find_selected_page() {
+	global $current_subject;
+	global $current_page;
+	//declaring global instead of writing a return
+if (isset($_GET["subject"])) {
+$current_subject = find_subject_by_id($_GET["subject"]);
+$current_page = null;
+} elseif (isset($_Get["page"])) {
+	$current_subject = null;
+	$current_page = find_page_by_id($_GET["page"]);
+}	else { 
+	$current_subject = null;
+	$current_page = null;
+}
+}
+?>
+
+//db_connection.php
+<?php
+//instead variable $dbhost="localhost" make it into a constant
+define("DB_SERVER", "localhost");
+define("DB_USER", "widget_cms");
+define("DB_PASS", "startrek7");
+define("DB_NAME", "widget_corp");
+
+
+// 1. Create a database connection
+
+$connection = mysqli_connect(DB_SERVER, DB_USER, DB_PASS, DB_NAME);
+
+//broken out argument variables rather than writing in values such as localhost
+//instead of $connection you can call $conn or $db, etc.
+
+//TEST IF CONNECTION OCCURED.
+
+if(mysqli_connect_errno()) {
+	die("Database connection failed: " .
+		mysqli_connect_error() .
+		" (" . mysqli_connect_erno() . ")"
+		);
+}
+?>
