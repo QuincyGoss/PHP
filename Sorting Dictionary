@@ -1,0 +1,71 @@
+<?php
+
+    $dictionary = array("bicycle", "book", "for", "recycle");
+
+    // The 'uniques' output file should contain every sequence of four letters
+    // that appears in exactly one word of the dictionary, with one sequence
+    // of four letters per line, alphabetized
+    function findUniques($words)
+    {
+        $uniqueLen  = 4;
+        $uniques    = array();
+        $fullwords  = array();
+
+        foreach ($words as $word)
+        {
+            // check if word is 4 chars or more, in which it may contain unique sequence(s)
+            if (strlen($word) >= $uniqueLen)
+            {
+                // we don't need to traverse the entire word, only up to the last possible
+                // $uniqueLen combination available; e.g. if word = "bicycle", obviously there
+                // are no possible 4 char combinations @ chars position "cle" and beyond
+                $searchLen = strlen($word) - ($uniqueLen - 1);
+
+                // traverse current word to find all 4 contiguous chars sequences
+                for ($char = 0; $char < $searchLen; $char++)
+                {
+                    // append each char to create 4 char sequence (includes space)
+                    $sequence = $word[$char] . $word[$char + 1] . $word[$char + 2] . $word[$char + 3];
+                    
+                    if (!in_array($sequence, $uniques))
+                    {
+                        // if 4 char sequence isn't in $uniques array, add it!
+                        array_push($uniques, $sequence);
+        array_push($fullwords, $word);
+                    }
+                    else
+                    {
+                        // unique sequence already exists in array, which means it's not
+                        // in exactly one word of the dictionary, remove it from $uniques !!!
+                        $key = array_search($sequence, $uniques);
+                        unset($uniques[$key]);
+	        unset($fullwords[$key]);
+                    }
+                }
+            }
+        }
+
+        // sort alphabetically
+        array_multisort($uniques, $fullwords); 
+
+        // output $uniques and $fullwords to .txt file 
+        $outputunique = implode(“\n”, $uniques);
+        $uniquefile = fopen(“uniques.txt”, “w”) or die(“Unable to open this file!”);
+       $uniquetext = $outputunique;
+      fwrite($uniquefile, $uniquetext);
+      fclose($uniquefile);
+
+     $outputname = implode(“\n”, $fullwords);
+     $fullnamefile = fopen(“fullname.txt”, “w”) or die(“Unable to open this file!”);
+     $nametext = $outputname;
+    fwrite($fullnamefile, $nametext);
+    fclose($myfile);
+
+    }
+
+    // execute function on defined dictionary input arg
+    findUniques($dictionary);
+
+?>
+
+
